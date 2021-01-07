@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alexander=20S=C3=B6derberg?=
+ <contact@alexander-soderberg.com>
+Date: Thu, 7 Jan 2021 05:58:35 +0100
+Subject: [PATCH] Add Cloud support
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/MinecraftInternalPlugin.java b/src/main/java/org/bukkit/craftbukkit/scheduler/MinecraftInternalPlugin.java
+index 256bc99cf94fc16af2a904d59add72d055a239be..1800518e135474087f69cfbdebc9088c78bdb8a3 100644
+--- a/src/main/java/org/bukkit/craftbukkit/scheduler/MinecraftInternalPlugin.java
++++ b/src/main/java/org/bukkit/craftbukkit/scheduler/MinecraftInternalPlugin.java
+@@ -136,6 +136,10 @@ public class MinecraftInternalPlugin extends PluginBase {
+     public Injector getInjector() {
+         return org.bukkit.Bukkit.getInjector();
+     }
++    @Override
++    public cloud.commandframework.paper.PaperCommandManager<org.bukkit.command.CommandSender> getCommandManager() {
++        throw new UnsupportedOperationException("Not supported.");
++    }
+     // korvkiosk end
+ 
+ }

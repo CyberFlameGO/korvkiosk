@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alexander=20S=C3=B6derberg?=
+ <contact@alexander-soderberg.com>
+Date: Thu, 7 Jan 2021 05:57:27 +0100
+Subject: [PATCH] Add Cloud support
+
+
+diff --git a/src/main/java/org/bukkit/plugin/Plugin.java b/src/main/java/org/bukkit/plugin/Plugin.java
+index ed6872cd10fcf70fe48576e88f03b5eb02628e77..438c36aac8d25ce6d0eaa84232b17a80e533afcf 100644
+--- a/src/main/java/org/bukkit/plugin/Plugin.java
++++ b/src/main/java/org/bukkit/plugin/Plugin.java
+@@ -192,5 +192,12 @@ public interface Plugin extends TabExecutor {
+      * @return Plugin injector
+      */
+     public com.google.inject.Injector getInjector();
++    /**
++     * Get the Cloud command manager tied to this plugin.
++     *
++     * @return Cloud command manager
++     */
++    @NotNull
++    public cloud.commandframework.paper.PaperCommandManager<org.bukkit.command.CommandSender> getCommandManager();
+     // korvkiosk end
+ }
+diff --git a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
+index bfd02e40a711099fcbcc1074b09f74fcaecbc3e9..9410f661a3b093af67abc860c1231f4fce7c354d 100644
+--- a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
++++ b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
+@@ -47,6 +47,7 @@ public abstract class JavaPlugin extends PluginBase {
+     private File configFile = null;
+     private Injector injector;
+     Logger logger = null; // Paper - PluginLogger -> Logger, package-private
++    private cloud.commandframework.paper.PaperCommandManager<org.bukkit.command.CommandSender> cloudCommandManager; // korvkiosk
+ 
+     public JavaPlugin() {
+         final ClassLoader classLoader = this.getClass().getClassLoader();
+@@ -389,6 +390,25 @@ public abstract class JavaPlugin extends PluginBase {
+     protected java.util.Collection<Module> getInjectionModules() {
+         return java.util.Collections.emptyList();
+     }
++    @NotNull
++    @Override
++    public cloud.commandframework.paper.PaperCommandManager<org.bukkit.command.CommandSender> getCommandManager() {
++        if (this.cloudCommandManager == null) {
++            try {
++                this.cloudCommandManager = new cloud.commandframework.paper.PaperCommandManager<>(
++                        this,
++                        cloud.commandframework.execution.CommandExecutionCoordinator.simpleCoordinator(),
++                        java.util.function.Function.identity(),
++                        java.util.function.Function.identity()
++                );
++            } catch (final java.lang.RuntimeException e) {
++                throw e;
++            } catch (final java.lang.Exception e) {
++                throw new java.lang.RuntimeException(e);
++            }
++        }
++        return this.cloudCommandManager;
++    }
+     // korvkiosk end
+ 
+     /**
+@@ -475,6 +495,8 @@ public abstract class JavaPlugin extends PluginBase {
+             bind(Logger.class).toProvider(JavaPlugin.this::getLogger);
+             bind(File.class).annotatedWith(Names.named(QUALIFIER_DATA_FOLDER)).toProvider(JavaPlugin.this::getDataFolder);
+             bind(File.class).annotatedWith(Names.named(QUALIFIER_FILE)).toProvider(JavaPlugin.this::getFile);
++            bind(new com.google.inject.TypeLiteral<cloud.commandframework.CommandManager<org.bukkit.command.CommandSender>>() {})
++                    .toProvider(JavaPlugin.this::getCommandManager);
+         }
+     }
+     // korvkiosk end
+diff --git a/src/test/java/org/bukkit/plugin/TestPlugin.java b/src/test/java/org/bukkit/plugin/TestPlugin.java
+index bf4362b2f25c581d85ad31fa4a0d037ae5aab8b0..b6ef20421dbb0d5bb87dee2f2604869e514c87b4 100644
+--- a/src/test/java/org/bukkit/plugin/TestPlugin.java
++++ b/src/test/java/org/bukkit/plugin/TestPlugin.java
+@@ -127,5 +127,9 @@ public class TestPlugin extends PluginBase {
+     public com.google.inject.Injector getInjector() {
+         throw new UnsupportedOperationException("Not supported.");
+     }
++    @Override
++    public cloud.commandframework.paper.PaperCommandManager<org.bukkit.command.CommandSender> getCommandManager() {
++        throw new UnsupportedOperationException("Not supported.");
++    }
+     // korvkiosk end
+ }
