@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: jmp <jasonpenilla2@me.com>
+Date: Thu, 7 Jan 2021 02:42:21 -0800
+Subject: [PATCH] Remove server GUI
+
+
+diff --git a/src/main/java/net/minecraft/server/Main.java b/src/main/java/net/minecraft/server/Main.java
+index 1c6dbd29c8414b3e33aedcc50bee5b5d9ce134d1..1fe4b98fc8f931aac14b1a3f555b1c8b88ba72c9 100644
+--- a/src/main/java/net/minecraft/server/Main.java
++++ b/src/main/java/net/minecraft/server/Main.java
+@@ -194,7 +194,7 @@ public class Main {
+                 boolean flag1 = !optionset.has("nogui") && !optionset.nonOptionArguments().contains("nogui");
+ 
+                 if (flag1 && !GraphicsEnvironment.isHeadless()) {
+-                    dedicatedserver1.bd();
++                    //dedicatedserver1.bd(); // korvkiosk - remove server GUI
+                 }
+ 
+                 if (optionset.has("port")) {
