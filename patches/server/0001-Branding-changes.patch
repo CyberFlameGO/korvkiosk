@@ -18,7 +18,7 @@ index c1280478ee4565003883df9607d4a8a0e8fe4faa..4e598c3c4a6bcdd7ddf69bf5f5094d0c
                  .completer(new ConsoleCommandCompleter(this.server))
          );
 diff --git a/src/main/java/net/pl3x/purpur/PurpurConfig.java b/src/main/java/net/pl3x/purpur/PurpurConfig.java
-index 7e0078e9c989fa0abf0eafc822eb3b81e9388c07..8232b4064e7ee9ea52ea142e436788908047b923 100644
+index dbda80c9a57dc7a1882a00020b407dd69a187649..b0db7d6dd0be123f10b262ae1f8ce5df0015bdff 100644
 --- a/src/main/java/net/pl3x/purpur/PurpurConfig.java
 +++ b/src/main/java/net/pl3x/purpur/PurpurConfig.java
 @@ -180,7 +180,7 @@ public class PurpurConfig {

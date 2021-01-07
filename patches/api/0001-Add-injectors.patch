@@ -1,0 +1,171 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alexander=20S=C3=B6derberg?=
+ <contact@alexander-soderberg.com>
+Date: Thu, 7 Jan 2021 05:40:29 +0100
+Subject: [PATCH] Add injectors
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index ba8eb67291c9848b367419f4c8110161ac7fab0d..f8b9e541f58e109d5d69c04c0c8f0a07bf1e24a3 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -1837,4 +1837,16 @@ public final class Bukkit {
+         return server.isLagging();
+     }
+     // Purpur end
++
++    // korvkiosk start - Add injector
++    /**
++     * Get the global injector instance.
++     *
++     * @return Global injector
++     */
++    @NotNull
++    public static com.google.inject.Injector getInjector() {
++        return server.getInjector();
++    }
++    // korvkiosk end
+ }
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 26c1953d23efd370ac7fd47fc3432edba4724139..102b6747dc903b474808c841f6950cdc036adbec 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -1621,4 +1621,14 @@ public interface Server extends PluginMessageRecipient {
+      */
+     boolean isLagging();
+     // Purpur end
++
++    // korvkiosk start - Add injector
++    /**
++     * Get the global injector instance.
++     *
++     * @return Global injector
++     */
++    @NotNull
++    com.google.inject.Injector getInjector();
++    // korvkiosk end
+ }
+diff --git a/src/main/java/org/bukkit/plugin/Plugin.java b/src/main/java/org/bukkit/plugin/Plugin.java
+index 79890c68f1ad31f951dfdbd9a16dac500ec58c40..ed6872cd10fcf70fe48576e88f03b5eb02628e77 100644
+--- a/src/main/java/org/bukkit/plugin/Plugin.java
++++ b/src/main/java/org/bukkit/plugin/Plugin.java
+@@ -183,4 +183,14 @@ public interface Plugin extends TabExecutor {
+      */
+     @NotNull
+     public String getName();
++
++    // korvkiosk start - Add Injector
++    /**
++     * Get the injector for this plugin. This is always a child injector of
++     * {@link Server#getInjector}. This injector can itself be injected.
++     *
++     * @return Plugin injector
++     */
++    public com.google.inject.Injector getInjector();
++    // korvkiosk end
+ }
+diff --git a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
+index 04fa3991f6ce4e9dad804f28fc6c947695857089..bfd02e40a711099fcbcc1074b09f74fcaecbc3e9 100644
+--- a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
++++ b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
+@@ -13,6 +13,9 @@ import java.net.URLConnection;
+ import java.util.List;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
++import com.google.inject.Injector;
++import com.google.inject.Module;
++import com.google.inject.name.Names;
+ import org.apache.commons.lang.Validate;
+ import org.bukkit.Server;
+ import org.bukkit.command.Command;
+@@ -42,6 +45,7 @@ public abstract class JavaPlugin extends PluginBase {
+     private boolean naggable = true;
+     private FileConfiguration newConfig = null;
+     private File configFile = null;
++    private Injector injector;
+     Logger logger = null; // Paper - PluginLogger -> Logger, package-private
+ 
+     public JavaPlugin() {
+@@ -281,6 +285,13 @@ public abstract class JavaPlugin extends PluginBase {
+             this.logger = com.destroystokyo.paper.utils.PaperPluginLogger.getLogger(this.description);
+         }
+         // Paper end
++        // korvkiosk start
++        final List<Module> modules = new java.util.ArrayList<>();
++        modules.add(new PluginInjectionModule());
++        modules.addAll(this.getInjectionModules());
++        this.injector = server.getInjector().createChildInjector(modules);
++        this.injector.injectMembers(this);
++        // korvkiosk end
+     }
+ 
+     /**
+@@ -361,6 +372,25 @@ public abstract class JavaPlugin extends PluginBase {
+         return description.getFullName();
+     }
+ 
++    // korvkiosk start
++    @NotNull
++    @Override
++    public Injector getInjector() {
++        return injector;
++    }
++
++    /**
++     * Get extra injection modules that will be used in the creation
++     * of the plugin injector ({@link #getInjector()}).
++     *
++     * @return Injection modules that will be added to the plugin injector
++     */
++    @NotNull
++    protected java.util.Collection<Module> getInjectionModules() {
++        return java.util.Collections.emptyList();
++    }
++    // korvkiosk end
++
+     /**
+      * This method provides fast access to the plugin that has {@link
+      * #getProvidingPlugin(Class) provided} the given plugin class, which is
+@@ -426,4 +456,26 @@ public abstract class JavaPlugin extends PluginBase {
+         }
+         return plugin;
+     }
++
++    // korvkiosk start
++    /**
++     * Name qualifier for {@link #getDataFolder()}
++     */
++    public static final String QUALIFIER_DATA_FOLDER = "DataFolder";
++    /**
++     * Name qualifier for {@link #getFile()}
++     */
++    public static final String QUALIFIER_FILE = "File";
++    private final class PluginInjectionModule extends com.google.inject.AbstractModule {
++        @Override
++        protected void configure() {
++            bind(org.bukkit.plugin.Plugin.class).toInstance(JavaPlugin.this);
++            bind(JavaPlugin.class).toInstance(JavaPlugin.this);
++            bind(FileConfiguration.class).toProvider(JavaPlugin.this::getConfig);
++            bind(Logger.class).toProvider(JavaPlugin.this::getLogger);
++            bind(File.class).annotatedWith(Names.named(QUALIFIER_DATA_FOLDER)).toProvider(JavaPlugin.this::getDataFolder);
++            bind(File.class).annotatedWith(Names.named(QUALIFIER_FILE)).toProvider(JavaPlugin.this::getFile);
++        }
++    }
++    // korvkiosk end
+ }
+diff --git a/src/test/java/org/bukkit/plugin/TestPlugin.java b/src/test/java/org/bukkit/plugin/TestPlugin.java
+index 6d450897187e810070f633e832034763a102a0b0..bf4362b2f25c581d85ad31fa4a0d037ae5aab8b0 100644
+--- a/src/test/java/org/bukkit/plugin/TestPlugin.java
++++ b/src/test/java/org/bukkit/plugin/TestPlugin.java
+@@ -121,4 +121,11 @@ public class TestPlugin extends PluginBase {
+     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+         throw new UnsupportedOperationException("Not supported.");
+     }
++
++    // korvkiosk start
++    @Override
++    public com.google.inject.Injector getInjector() {
++        throw new UnsupportedOperationException("Not supported.");
++    }
++    // korvkiosk end
+ }
