@@ -23,7 +23,7 @@ index 438c36aac8d25ce6d0eaa84232b17a80e533afcf..f77fd9de3f12cd549cc70aedb39e6ce8
      // korvkiosk end
  }
 diff --git a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
-index 9410f661a3b093af67abc860c1231f4fce7c354d..014ee517400c127b370737b02a487e1fe0cb58d9 100644
+index 9410f661a3b093af67abc860c1231f4fce7c354d..eb9d92560e11ad8e10ad9f96f2916539b1009753 100644
 --- a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
 +++ b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
 @@ -48,6 +48,7 @@ public abstract class JavaPlugin extends PluginBase {
@@ -46,10 +46,13 @@ index 9410f661a3b093af67abc860c1231f4fce7c354d..014ee517400c127b370737b02a487e1f
      // korvkiosk end
  
      /**
-@@ -499,5 +505,15 @@ public abstract class JavaPlugin extends PluginBase {
+@@ -497,6 +503,17 @@ public abstract class JavaPlugin extends PluginBase {
+             bind(File.class).annotatedWith(Names.named(QUALIFIER_FILE)).toProvider(JavaPlugin.this::getFile);
+             bind(new com.google.inject.TypeLiteral<cloud.commandframework.CommandManager<org.bukkit.command.CommandSender>>() {})
                      .toProvider(JavaPlugin.this::getCommandManager);
-         }
-     }
++            bind(kotlinx.coroutines.CoroutineDispatcher.class).toProvider(JavaPlugin.this::getDispatcher);
++        }
++    }
 +    private final class PluginDispatcher extends kotlinx.coroutines.CoroutineDispatcher {
 +        @Override
 +        public void dispatch(kotlin.coroutines.CoroutineContext coroutineContext, java.lang.Runnable runnable) {
@@ -58,10 +61,9 @@ index 9410f661a3b093af67abc860c1231f4fce7c354d..014ee517400c127b370737b02a487e1f
 +            } else {
 +                org.bukkit.Bukkit.getScheduler().runTask(JavaPlugin.this, runnable);
 +            }
-+        }
-+    }
+         }
+     }
      // korvkiosk end
- }
 diff --git a/src/main/java/org/bukkit/scheduler/BukkitScheduler.java b/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
 index ac140fc2c638e22e06b2920db3e376ab9e8c3733..722824cfadee232e2bcb39ea956e3f59b9ab50f3 100644
 --- a/src/main/java/org/bukkit/scheduler/BukkitScheduler.java

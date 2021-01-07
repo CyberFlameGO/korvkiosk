@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alexander=20S=C3=B6derberg?=
+ <contact@alexander-soderberg.com>
+Date: Thu, 7 Jan 2021 11:06:46 +0100
+Subject: [PATCH] Add more material tags
+
+
+diff --git a/src/main/java/com/destroystokyo/paper/MaterialTags.java b/src/main/java/com/destroystokyo/paper/MaterialTags.java
+index 3f36165d89ae4aaa153dcb9ddbb8c58a9b1a046f..68ac798378025c1bfc8941a0cf6cb7d13edfbfcf 100644
+--- a/src/main/java/com/destroystokyo/paper/MaterialTags.java
++++ b/src/main/java/com/destroystokyo/paper/MaterialTags.java
+@@ -553,4 +553,17 @@ public class MaterialTags {
+             .add(PICKAXES, SWORDS, SHOVELS, AXES, HOES, HELMETS, CHEST_EQUIPPABLE, LEGGINGS, BOOTS, BOWS)
+             .add(Material.TRIDENT, Material.SHIELD, Material.FISHING_ROD, Material.SHEARS, Material.FLINT_AND_STEEL, Material.CARROT_ON_A_STICK, Material.WARPED_FUNGUS_ON_A_STICK)
+             .ensureSize("ENCHANTABLE", 65);
++
++    // korvkiosk start
++    /**
++     * All axes, hoes, pickaxes and shovels
++     */
++    public static MaterialSetTag TOOLS = new MaterialSetTag(keyFor("tools"))
++            .add(AXES, HOES, PICKAXES, SHOVELS);
++    /**
++     * All equippable items
++     */
++    public static MaterialSetTag EQUIPPABLE = new MaterialSetTag(keyFor("equipable"))
++            .add(HEAD_EQUIPPABLE, CHEST_EQUIPPABLE, LEGGINGS, BOOTS);
++    // korvkiosk end
+ }
