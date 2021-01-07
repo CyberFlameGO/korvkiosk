@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alexander=20S=C3=B6derberg?=
+ <contact@alexander-soderberg.com>
+Date: Thu, 7 Jan 2021 06:48:33 +0100
+Subject: [PATCH] Synchronization Extravaganza
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
+index 13e461ffb2ee2e7d0440c0f60809ea99629b843c..48da030b9df37868519560f6882c873ea1e81e0b 100644
+--- a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
++++ b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
+@@ -635,4 +635,21 @@ public class CraftScheduler implements BukkitScheduler {
+     public BukkitTask runTaskTimerAsynchronously(Plugin plugin, BukkitRunnable task, long delay, long period) throws IllegalArgumentException {
+         throw new UnsupportedOperationException("Use BukkitRunnable#runTaskTimerAsynchronously(Plugin, long, long)");
+     }
++
++    // korvkiosk start
++    @Override
++    public <T> java.util.concurrent.CompletableFuture<T> supplySync(Plugin plugin, java.util.function.Supplier<T> supplier) {
++        final java.util.concurrent.CompletableFuture<T> future = new java.util.concurrent.CompletableFuture<T>();
++        if (org.bukkit.Bukkit.isPrimaryThread()) {
++            // If we are on the primary thread, we can complete immediately
++            future.complete(supplier.get());
++        } else {
++            this.<Void>callSyncMethod(plugin, () -> {
++                future.complete(supplier.get());
++                return null;
++            });
++        }
++        return future;
++    }
++    // korvkiosk end
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/MinecraftInternalPlugin.java b/src/main/java/org/bukkit/craftbukkit/scheduler/MinecraftInternalPlugin.java
+index 1800518e135474087f69cfbdebc9088c78bdb8a3..0a07baea77602f194654ea5b42f978d4539af84a 100644
+--- a/src/main/java/org/bukkit/craftbukkit/scheduler/MinecraftInternalPlugin.java
++++ b/src/main/java/org/bukkit/craftbukkit/scheduler/MinecraftInternalPlugin.java
+@@ -140,6 +140,10 @@ public class MinecraftInternalPlugin extends PluginBase {
+     public cloud.commandframework.paper.PaperCommandManager<org.bukkit.command.CommandSender> getCommandManager() {
+         throw new UnsupportedOperationException("Not supported.");
+     }
++    @Override
++    public kotlinx.coroutines.CoroutineDispatcher getDispatcher() {
++        throw new UnsupportedOperationException("Not supported.");
++    }
+     // korvkiosk end
+ 
+ }

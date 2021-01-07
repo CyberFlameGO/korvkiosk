@@ -1,0 +1,102 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alexander=20S=C3=B6derberg?=
+ <contact@alexander-soderberg.com>
+Date: Thu, 7 Jan 2021 06:48:21 +0100
+Subject: [PATCH] Synchronization Extravaganza
+
+
+diff --git a/src/main/java/org/bukkit/plugin/Plugin.java b/src/main/java/org/bukkit/plugin/Plugin.java
+index 438c36aac8d25ce6d0eaa84232b17a80e533afcf..f77fd9de3f12cd549cc70aedb39e6ce8678b147d 100644
+--- a/src/main/java/org/bukkit/plugin/Plugin.java
++++ b/src/main/java/org/bukkit/plugin/Plugin.java
+@@ -199,5 +199,12 @@ public interface Plugin extends TabExecutor {
+      */
+     @NotNull
+     public cloud.commandframework.paper.PaperCommandManager<org.bukkit.command.CommandSender> getCommandManager();
++    /**
++     * Get a coroutine dispatcher that synchronizes with the primary thread
++     *
++     * @return Coroutine dispatcher
++     */
++    @NotNull
++    kotlinx.coroutines.CoroutineDispatcher getDispatcher();
+     // korvkiosk end
+ }
+diff --git a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
+index 9410f661a3b093af67abc860c1231f4fce7c354d..014ee517400c127b370737b02a487e1fe0cb58d9 100644
+--- a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
++++ b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
+@@ -48,6 +48,7 @@ public abstract class JavaPlugin extends PluginBase {
+     private Injector injector;
+     Logger logger = null; // Paper - PluginLogger -> Logger, package-private
+     private cloud.commandframework.paper.PaperCommandManager<org.bukkit.command.CommandSender> cloudCommandManager; // korvkiosk
++    private final kotlinx.coroutines.CoroutineDispatcher dispatcher = new PluginDispatcher();
+ 
+     public JavaPlugin() {
+         final ClassLoader classLoader = this.getClass().getClassLoader();
+@@ -409,6 +410,11 @@ public abstract class JavaPlugin extends PluginBase {
+         }
+         return this.cloudCommandManager;
+     }
++    @NotNull
++    @Override
++    public final kotlinx.coroutines.CoroutineDispatcher getDispatcher() {
++        return this.dispatcher;
++    }
+     // korvkiosk end
+ 
+     /**
+@@ -499,5 +505,15 @@ public abstract class JavaPlugin extends PluginBase {
+                     .toProvider(JavaPlugin.this::getCommandManager);
+         }
+     }
++    private final class PluginDispatcher extends kotlinx.coroutines.CoroutineDispatcher {
++        @Override
++        public void dispatch(kotlin.coroutines.CoroutineContext coroutineContext, java.lang.Runnable runnable) {
++            if (org.bukkit.Bukkit.isPrimaryThread()) {
++                runnable.run();
++            } else {
++                org.bukkit.Bukkit.getScheduler().runTask(JavaPlugin.this, runnable);
++            }
++        }
++    }
+     // korvkiosk end
+ }
+diff --git a/src/main/java/org/bukkit/scheduler/BukkitScheduler.java b/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
+index ac140fc2c638e22e06b2920db3e376ab9e8c3733..722824cfadee232e2bcb39ea956e3f59b9ab50f3 100644
+--- a/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
++++ b/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
+@@ -9,6 +9,19 @@ import org.jetbrains.annotations.NotNull;
+ 
+ public interface BukkitScheduler {
+ 
++    // korvkiosk start
++    /**
++     * Evaluates the supplier on the main thread and completes the future with the result. The future
++     * should <b>NOT</b> be joined from the primary thread.
++     *
++     * @param plugin Plugin that wants the result
++     * @param supplier Supplier of the result
++     * @param <T> Result type
++     * @return Future that completes with the result
++     */
++    <T> java.util.concurrent.CompletableFuture<T> supplySync(@NotNull Plugin plugin, @NotNull java.util.function.Supplier<T> supplier);
++    // korvkiosk end
++
+     /**
+      * Schedules a once off task to occur after a delay.
+      * <p>
+diff --git a/src/test/java/org/bukkit/plugin/TestPlugin.java b/src/test/java/org/bukkit/plugin/TestPlugin.java
+index b6ef20421dbb0d5bb87dee2f2604869e514c87b4..80ec117557e85eb25a6b489ecfc7ec0dd3edea68 100644
+--- a/src/test/java/org/bukkit/plugin/TestPlugin.java
++++ b/src/test/java/org/bukkit/plugin/TestPlugin.java
+@@ -131,5 +131,9 @@ public class TestPlugin extends PluginBase {
+     public cloud.commandframework.paper.PaperCommandManager<org.bukkit.command.CommandSender> getCommandManager() {
+         throw new UnsupportedOperationException("Not supported.");
+     }
++    @Override
++    public kotlinx.coroutines.CoroutineDispatcher getDispatcher() {
++        throw new UnsupportedOperationException("Not supported.");
++    }
+     // korvkiosk end
+ }
