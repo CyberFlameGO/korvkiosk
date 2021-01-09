@@ -6,7 +6,7 @@ Subject: [PATCH] Synchronization Extravaganza
 
 
 diff --git a/src/main/java/org/bukkit/plugin/Plugin.java b/src/main/java/org/bukkit/plugin/Plugin.java
-index 438c36aac8d25ce6d0eaa84232b17a80e533afcf..f77fd9de3f12cd549cc70aedb39e6ce8678b147d 100644
+index 7737dc9a4fd0ef508601cc88378927a520ae8c3c..bb0ed05a87db20fc500480c92c1dd87995cf182b 100644
 --- a/src/main/java/org/bukkit/plugin/Plugin.java
 +++ b/src/main/java/org/bukkit/plugin/Plugin.java
 @@ -199,5 +199,12 @@ public interface Plugin extends TabExecutor {
@@ -23,7 +23,7 @@ index 438c36aac8d25ce6d0eaa84232b17a80e533afcf..f77fd9de3f12cd549cc70aedb39e6ce8
      // korvkiosk end
  }
 diff --git a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
-index 9410f661a3b093af67abc860c1231f4fce7c354d..eb9d92560e11ad8e10ad9f96f2916539b1009753 100644
+index 9410f661a3b093af67abc860c1231f4fce7c354d..1ed4b5cbd94099a6215356a65be765c87ac20c6e 100644
 --- a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
 +++ b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
 @@ -48,6 +48,7 @@ public abstract class JavaPlugin extends PluginBase {
@@ -55,7 +55,7 @@ index 9410f661a3b093af67abc860c1231f4fce7c354d..eb9d92560e11ad8e10ad9f96f2916539
 +    }
 +    private final class PluginDispatcher extends kotlinx.coroutines.CoroutineDispatcher {
 +        @Override
-+        public void dispatch(kotlin.coroutines.CoroutineContext coroutineContext, java.lang.Runnable runnable) {
++        public void dispatch(final @NotNull kotlin.coroutines.CoroutineContext coroutineContext, final @NotNull java.lang.Runnable runnable) {
 +            if (org.bukkit.Bukkit.isPrimaryThread()) {
 +                runnable.run();
 +            } else {
@@ -65,7 +65,7 @@ index 9410f661a3b093af67abc860c1231f4fce7c354d..eb9d92560e11ad8e10ad9f96f2916539
      }
      // korvkiosk end
 diff --git a/src/main/java/org/bukkit/scheduler/BukkitScheduler.java b/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
-index ac140fc2c638e22e06b2920db3e376ab9e8c3733..722824cfadee232e2bcb39ea956e3f59b9ab50f3 100644
+index ac140fc2c638e22e06b2920db3e376ab9e8c3733..8546c5f268566368c47858b91bcac7048aaefe74 100644
 --- a/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
 +++ b/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
 @@ -9,6 +9,19 @@ import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ index ac140fc2c638e22e06b2920db3e376ab9e8c3733..722824cfadee232e2bcb39ea956e3f59
 +     * @param <T> Result type
 +     * @return Future that completes with the result
 +     */
-+    <T> java.util.concurrent.CompletableFuture<T> supplySync(@NotNull Plugin plugin, @NotNull java.util.function.Supplier<T> supplier);
++    <T> @NotNull java.util.concurrent.CompletableFuture<T> supplySync(@NotNull Plugin plugin, @NotNull java.util.function.Supplier<T> supplier);
 +    // korvkiosk end
 +
      /**

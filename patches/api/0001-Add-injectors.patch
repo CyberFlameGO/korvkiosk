@@ -46,7 +46,7 @@ index 26c1953d23efd370ac7fd47fc3432edba4724139..102b6747dc903b474808c841f6950cdc
 +    // korvkiosk end
  }
 diff --git a/src/main/java/org/bukkit/plugin/Plugin.java b/src/main/java/org/bukkit/plugin/Plugin.java
-index 79890c68f1ad31f951dfdbd9a16dac500ec58c40..ed6872cd10fcf70fe48576e88f03b5eb02628e77 100644
+index 79890c68f1ad31f951dfdbd9a16dac500ec58c40..76d5a86ea956aac82c08fbe982ad37a39267d7c2 100644
 --- a/src/main/java/org/bukkit/plugin/Plugin.java
 +++ b/src/main/java/org/bukkit/plugin/Plugin.java
 @@ -183,4 +183,14 @@ public interface Plugin extends TabExecutor {
@@ -61,7 +61,7 @@ index 79890c68f1ad31f951dfdbd9a16dac500ec58c40..ed6872cd10fcf70fe48576e88f03b5eb
 +     *
 +     * @return Plugin injector
 +     */
-+    public com.google.inject.Injector getInjector();
++    public @NotNull com.google.inject.Injector getInjector();
 +    // korvkiosk end
  }
 diff --git a/src/main/java/org/bukkit/plugin/java/JavaPlugin.java b/src/main/java/org/bukkit/plugin/java/JavaPlugin.java
